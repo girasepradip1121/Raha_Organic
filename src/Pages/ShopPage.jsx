@@ -6,7 +6,7 @@ const ShopPage = () => {
   return (
     <>
       <Shop />
-      {/* <Contact /> */}
+      <Contact />
     </>
   );
 };

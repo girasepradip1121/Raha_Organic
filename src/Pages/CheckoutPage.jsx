@@ -1,38 +1,9 @@
 "use client";
 import { useState } from "react";
 import { ChevronLeft, CreditCard } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { API_URL, userToken } from "../Components/Variable";
-import { toast } from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 export default function CheckoutPage() {
-  const [paymentMethod, setPaymentMethod] = useState("cod");
-
-  const location = useLocation();
-  const navigate = useNavigate();
-  const userData = userToken();
-  const userId = userData.userId;
-
-  const { cartItems, totalPrice } = location.state || {
-    cartItems: [],
-    totalPrice: 0,
-  };
-
-  const directProduct = location.state?.product || null;
-  const finalCartItems = directProduct
-    ? [{ ...directProduct, quantity: 1 }]
-    : cartItems;
-
-  const subtotal = finalCartItems?.reduce((sum, item) => {
-    const product = item.product || item; // Cart se hai to item.product, Buy Now se hai to item
-    return sum + (product.price || item.price) * (item.quantity || 1);
-  }, 0);
-
-  const shipping = 20;
-  const tax = 20;
-  const total = subtotal + shipping + tax;
-
   // Form state
   const [formData, setFormData] = useState({
     firstName: "",
@@ -40,14 +11,42 @@ export default function CheckoutPage() {
     email: "",
     phone: "",
     address: "",
-    apt: "",
+    apartment: "",
     city: "",
     state: "",
-    postalCode: "",
-    // cardNumber: "",
-    // expiryDate: "",
-    // cvc: "",
+    zipCode: "",
+    paymentMethod: "credit",
+    cardNumber: "",
+    expiryDate: "",
+    cvc: "",
   });
+
+  // Products in cart
+  const [cartItems] = useState([
+    {
+      id: 1,
+      name: "Revitalizing Hair Serum",
+      price: 120,
+      quantity: 1,
+      image: "/placeholder.svg?height=60&width=60",
+    },
+    {
+      id: 2,
+      name: "Revitalizing Hair Serum",
+      price: 120,
+      quantity: 1,
+      image: "/placeholder.svg?height=60&width=60",
+    },
+  ]);
+
+  // Calculate order summary
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  const shipping = 20;
+  const tax = 20;
+  const total = subtotal + shipping + tax;
 
   // Handle input changes
   const handleChange = (e) => {
@@ -56,7 +55,7 @@ export default function CheckoutPage() {
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     // Basic validation
@@ -68,62 +67,24 @@ export default function CheckoutPage() {
       !formData.address ||
       !formData.city ||
       !formData.state ||
-      !formData.postalCode
+      !formData.zipCode
     ) {
-      toast.error("Please fill in all required fields");
+      alert("Please fill in all required fields");
       return;
     }
 
-    const orderData = {
-      userId,
-      shippingCharge: shipping,
-      tax: tax,
-      totalPrice: total,
-      paymentMethod,
-      formData,
-      status: 1,
-      orderItems: finalCartItems.map((item) => {
-        const product = item.product || item;
-        const productId = item.productId; // 👈 Yeh fix hai
-        const price = product.price;
-        const quantity = item.quantity || 1;
-
-        return {
-          productId,
-          quantity,
-          price,
-          totalAmount: quantity * price,
-        };
-      }),
-    };
-    try {
-      await axios.post(`${API_URL}/order/create`, orderData, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${userData.token}`,
-        },
-      });
-      toast.success("Order placed successfully");
-      navigate("/order-success");
-    } catch (error) {
-      console.error(
-        "Error placing order:",
-        error.response ? error.response.data : error
-      );
-      toast.error("Something went wrong!");
-    }
-    console.log("Final Cart Items being sent to backend:", finalCartItems);
-
     // Payment method validation
-    // if (
-    //   formData.paymentMethod === "credit" &&
-    //   (!formData.cardNumber || !formData.expiryDate || !formData.cvc)
-    // ) {
-    //   alert("Please fill in all payment details");
-    //   return;
-    // }
+    if (
+      formData.paymentMethod === "credit" &&
+      (!formData.cardNumber || !formData.expiryDate || !formData.cvc)
+    ) {
+      alert("Please fill in all payment details");
+      return;
+    }
 
     // Process order (in a real app, this would call an API)
+    console.log("Order placed successfully!", formData);
+    alert("Order placed successfully!");
   };
 
   return (
@@ -251,9 +212,9 @@ export default function CheckoutPage() {
                   </label>
                   <input
                     type="text"
-                    id="apt"
-                    name="apt"
-                    value={formData.apt}
+                    id="apartment"
+                    name="apartment"
+                    value={formData.apartment}
                     onChange={handleChange}
                     placeholder="Apartment, suite, etc."
                     className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-1 focus:ring-primary"
@@ -336,16 +297,16 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <label
-                      htmlFor="postalCode"
+                      htmlFor="zipCode"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
                       ZIP Code
                     </label>
                     <input
                       type="text"
-                      id="postalCode"
-                      name="postalCode"
-                      value={formData.postalCode}
+                      id="zipCode"
+                      name="zipCode"
+                      value={formData.zipCode}
                       onChange={handleChange}
                       placeholder="Enter ZIP Code"
                       className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-1 focus:ring-primary"
@@ -361,7 +322,7 @@ export default function CheckoutPage() {
                 Payment Method
               </h2>
               <div className="space-y-4">
-                {/* <div className="border border-gray-300 p-4">
+                <div className="border border-gray-300 p-4">
                   <div className="flex items-center">
                     <input
                       type="radio"
@@ -450,7 +411,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   )}
-                </div> */}
+                </div>
 
                 <div className="border border-gray-300 p-4">
                   <div className="flex items-center">
@@ -459,9 +420,8 @@ export default function CheckoutPage() {
                       id="online"
                       name="paymentMethod"
                       value="online"
-                      checked={paymentMethod === "online"}
-                      // onChange={handleChange}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      checked={formData.paymentMethod === "online"}
+                      onChange={handleChange}
                       className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
                     />
                     <label
@@ -477,12 +437,11 @@ export default function CheckoutPage() {
                   <div className="flex items-center">
                     <input
                       type="radio"
-                      id="cod"
+                      id="cash"
                       name="paymentMethod"
-                      value="cod"
-                      checked={paymentMethod === "cod"}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      // onChange={handleChange}
+                      value="cash"
+                      checked={formData.paymentMethod === "cash"}
+                      onChange={handleChange}
                       className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
                     />
                     <label
@@ -499,73 +458,6 @@ export default function CheckoutPage() {
         </div>
 
         {/* Order Summary */}
-        {/* <div className="lg:col-span-1">
-          <div className="border border-gray-200 p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
-              Order Summary
-            </h2>
-
-            <div className="space-y-4 mb-6">
-              {finalCartItems?.map((item) => (
-                <div key={item.cartId} className="flex items-center">
-                  <img
-                    src={`${API_URL}/${item.product?.images[0]}`}
-                    alt={item.name}
-                    className="w-12 h-12 object-cover mr-4"
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium">{item.product?.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      Qty: {item.quantity} × ₹{item.product?.price}
-                    </p>
-                  </div>
-                  <p className="text-sm text-gray-800 font-medium">
-                    ₹{(item.quantity * item.product?.price).toFixed(2)}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-gray-200 pt-4 space-y-2">
-              <div className="flex justify-between">
-                <p className="text-sm text-gray-600">Subtotal</p>
-                <p className="text-sm font-medium">₹{(subtotal || 0).toFixed(2)}  </p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-sm text-gray-600">Shipping</p>
-                <p className="text-sm font-medium">₹{(shipping || 0).toFixed(2)}</p>
-              </div>
-              <div className="flex justify-between">
-                <p className="text-sm text-gray-600">Tax</p>
-                <p className="text-sm font-medium">₹{(tax || 0).toFixed(2)}</p>
-              </div>
-              <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
-                <p className="text-base font-medium">Total</p>
-                <p className="text-base font-bold">₹{(total || 0).toFixed(2)}</p>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              className="w-full mt-6 bg-purple-600 text-white py-3 px-4 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
-            >
-              Place Order
-            </button>
-
-            <p className="text-xs text-center text-gray-500 mt-4">
-              By placing your order, you agree to our{" "}
-              <Link to="#" className="text-purple-600 hover:underline">
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link to="#" className="text-purple-600 hover:underline">
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </div>
-        </div> */}
         <div className="lg:col-span-1">
           <div className="border border-gray-200 p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">
@@ -573,62 +465,40 @@ export default function CheckoutPage() {
             </h2>
 
             <div className="space-y-4 mb-6">
-              {finalCartItems?.map((item) => {
-                // Agar cart ka product hai to item.product use hoga, warna item direct hoga
-                const product = item.product || item;
-
-                return (
-                  <div
-                    key={product.productId || item.cartId}
-                    className="flex items-center"
-                  >
-                    <img
-                      src={`${API_URL}/${
-                        product.images?.[0] || "default-image.jpg"
-                      }`}
-                      alt={product.name || "Product Image"}
-                      className="w-12 h-12 object-cover mr-4"
-                    />
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium">
-                        {product.name || "Unnamed Product"}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        Qty: {item.quantity || 1} × ₹
-                        {product.price?.toFixed(2) || "0.00"}
-                      </p>
-                    </div>
-                    <p className="text-sm text-gray-800 font-medium">
-                      ₹
-                      {((item.quantity || 1) * (product.price || 0)).toFixed(2)}
+              {cartItems.map((item) => (
+                <div key={item.id} className="flex items-center">
+                  <img
+                    src="cart1.svg"
+                    alt={item.name}
+                    className="w-12 h-12 object-cover mr-4"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium">{item.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      Qty: {item.quantity}
                     </p>
                   </div>
-                );
-              })}
+                  <p className="text-sm font-medium">₹{item.price}</p>
+                </div>
+              ))}
             </div>
 
             <div className="border-t border-gray-200 pt-4 space-y-2">
               <div className="flex justify-between">
                 <p className="text-sm text-gray-600">Subtotal</p>
-                <p className="text-sm font-medium">
-                  ₹{(subtotal || 0).toFixed(2)}
-                </p>
+                <p className="text-sm font-medium">₹{subtotal.toFixed(2)}</p>
               </div>
               <div className="flex justify-between">
                 <p className="text-sm text-gray-600">Shipping</p>
-                <p className="text-sm font-medium">
-                  ₹{(shipping || 0).toFixed(2)}
-                </p>
+                <p className="text-sm font-medium">₹{shipping.toFixed(2)}</p>
               </div>
               <div className="flex justify-between">
                 <p className="text-sm text-gray-600">Tax</p>
-                <p className="text-sm font-medium">₹{(tax || 0).toFixed(2)}</p>
+                <p className="text-sm font-medium">₹{tax.toFixed(2)}</p>
               </div>
               <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
                 <p className="text-base font-medium">Total</p>
-                <p className="text-base font-bold">
-                  ₹{(total || 0).toFixed(2)}
-                </p>
+                <p className="text-base font-bold">₹{total.toFixed(2)}</p>
               </div>
             </div>
 

@@ -6,7 +6,7 @@ const ShopPage = () => {
   return (
     <>
       <AllProducts />
-      {/* <Contact /> */}
+      <Contact />
     </>
   );
 };

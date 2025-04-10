@@ -1,35 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Mail, Phone, MapPin } from "lucide-react";
-import axios from "axios";
-import { API_URL, userToken } from "./Variable";
-import { toast } from "react-hot-toast";
 
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
-
-  const createRequest = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(`${API_URL}/contact/create`, formData);
-      setFormData({ name: "", email: "", message: "" });
-      toast.success("Request Send Successfully");
-    } catch (error) {
-      toast.success("Error To Send Request");
-      console.log(error);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       {/* Title & Description */}
@@ -74,14 +46,11 @@ const Contact = () => {
 
         {/* Right Side - Contact Form */}
         <div className="border border-[#DCDCDC] p-8">
-          <form onSubmit={createRequest}>
+          <form>
             <div className="mb-4">
               <label className="block text-gray-700 font-medium">Name</label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
                 placeholder="Your Name"
                 className="w-full p-3 border border-[#DCDCDC] focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
@@ -91,9 +60,6 @@ const Contact = () => {
               <label className="block text-gray-700 font-medium">Email</label>
               <input
                 type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
                 placeholder="Your Email"
                 className="w-full p-3 border border-[#DCDCDC] focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
@@ -103,18 +69,12 @@ const Contact = () => {
               <label className="block text-gray-700 font-medium">Message</label>
               <textarea
                 rows="4"
-                name="message"
-                value={formData.message}
-                onChange={handleInputChange}
                 placeholder="Your Message"
                 className="w-full p-3 border border-[#DCDCDC] focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
               ></textarea>
             </div>
 
-            <button
-              className="w-full bg-purple-600 text-white py-3 hover:bg-purple-700 transition"
-              type="submit"
-            >
+            <button className="w-full bg-purple-600 text-white py-3 hover:bg-purple-700 transition">
               Your Email
             </button>
           </form>

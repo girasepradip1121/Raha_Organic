@@ -1,31 +1,61 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom"; // ✅ Import useNavigate
+import React, { useRef } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
-import axios from "axios";
-import { API_URL } from "./Variable";
 
+const products = [
+  {
+    id: 1,
+    title: "Top-Selling Hair Essential!",
+    price: 120.99,
+    rating: 4,
+    reviews: 20,
+    image: "/t1.jpg",
+  },
+  {
+    id: 2,
+    title: "Top-Selling Hair Essential!",
+    price: 120.99,
+    rating: 4,
+    reviews: 20,
+    image: "/t2.jpg",
+  },
+  {
+    id: 3,
+    title: "Top-Selling Hair Essential!",
+    price: 120.99,
+    rating: 4,
+    reviews: 20,
+    image: "/t3.jpg",
+  },
+  {
+    id: 4,
+    title: "Top-Selling Hair Essential!",
+    price: 120.99,
+    rating: 4,
+    reviews: 20,
+    image: "/t4.jpg",
+  },
+  {
+    id: 5,
+    title: "Top-Selling Hair Essential!",
+    price: 120.99,
+    rating: 4,
+    reviews: 20,
+    image: "/t5.jpg",
+  },
+  {
+    id: 6,
+    title: "Top-Selling Hair Essential!",
+    price: 120.99,
+    rating: 4,
+    reviews: 20,
+    image: "/t6.jpg",
+  },
+];
 
 const ProductSlider = () => {
-  const { productId } = useParams(); // ✅ Extract productId from URL
-
-  const [products, setProducts] = useState([]);
   const scrollRef = useRef(null);
   const navigate = useNavigate(); // ✅ Initialize useNavigate
-
-  useEffect(() => {
-    const fetchRecommendations = async () => {
-      if (!productId) return;
-      try {
-        const response = await axios.get(
-          `${API_URL}/product/getrecommanded/${productId}`
-        );
-        setProducts(response.data);
-      } catch (err) {
-        console.error("Error fetching recommendations:", err.message);
-      }
-    };
-    fetchRecommendations();
-  }, [productId]);
 
   const scroll = (direction) => {
     if (scrollRef.current) {
@@ -45,7 +75,7 @@ const ProductSlider = () => {
     <div className="max-w-[1200px] mx-auto px-4 py-12 relative">
       <div className="mb-12 flex flex-col md:flex-row items-start justify-between gap-8">
         <h1 className="text-4xl md:text-5xl font-light md:w-[35%] leading-tight">
-          Recommandations!
+          Top-Selling Hair Essential!
         </h1>
         <p className="text-gray-600 text-lg md:w-[55%] leading-relaxed">
           Get stronger, shinier, and healthier hair with our natural Hair
@@ -68,28 +98,28 @@ const ProductSlider = () => {
         >
           {products.map((product) => (
             <div
-              key={product.productId}
+              key={product.id}
               className="w-[calc(100vw-32px)] md:w-[335px] bg-white border border-gray-300 p-4 snap-start flex-shrink-0 cursor-pointer"
-              onClick={() => navigate(`/product/${product.productId}`)} // ✅ Navigate on click
+              onClick={() => navigate(`/product/${product.id}`)} // ✅ Navigate on click
             >
               <div className="aspect-square overflow-hidden mb-4">
                 <img
-                  src={`${API_URL}/${product.images[0]}`}
-                  alt={product.name}
+                  src={product.image}
+                  alt={product.title}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+              <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
               <div className="flex items-center gap-2 mb-2">
-                <StarRating rating={product.averageRating} />
+                <StarRating rating={product.rating} />
                 <span className="text-sm text-gray-600">
-                  ({product.totalRatings})
+                  ({product.reviews})
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xl font-bold">₹{product.price}</span>
                 <button
-                  className="bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-800 transition-colors cursor-pointer"
+                  className="bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-800 transition-colors"
                   onClick={() => {
                     window.scrollTo(0, 0); // Scroll to top
                     navigate("/cart");

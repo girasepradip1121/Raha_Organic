@@ -20,7 +20,7 @@ const About = () => {
           </div>
           <div className="order-first md:order-last">
             <img
-              src="/about.svg"
+              src="about.svg"
               alt="Person examining scalp with dandruff"
               className="w-full h-auto object-cover"
             />
@@ -33,7 +33,7 @@ const About = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div>
             <img
-              src="/about1.svg"
+              src="about1.svg"
               alt="Person with damaged hair"
               className="w-full h-auto object-cover"
             />
