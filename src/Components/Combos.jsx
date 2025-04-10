@@ -1,64 +1,130 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import axios from "axios";
+import { API_URL, userToken } from "./Variable";
+import { toast } from "react-hot-toast";
 
-const products = [
-  {
-    id: 1,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 5,
-    reviews: 20,
-    image: "c1.jpg",
-  },
-  {
-    id: 2,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 5,
-    reviews: 20,
-    image: "c2.jpg",
-  },
-  {
-    id: 3,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 5,
-    reviews: 20,
-    image: "c3.jpg",
-  },
-  {
-    id: 4,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 5,
-    reviews: 20,
-    image: "c4.jpg",
-  },
-  {
-    id: 5,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 5,
-    reviews: 20,
-    image: "c5.jpg",
-  },
-  {
-    id: 6,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 5,
-    reviews: 20,
-    image: "c6.jpg",
-  },
-];
+// const products = [
+//   {
+//     id: 1,
+//     title: "Top-Selling Hair Essential!",
+//     price: 120.99,
+//     rating: 5,
+//     reviews: 20,
+//     image: "c1.jpg",
+//   },
+//   {
+//     id: 2,
+//     title: "Top-Selling Hair Essential!",
+//     price: 120.99,
+//     rating: 5,
+//     reviews: 20,
+//     image: "c2.jpg",
+//   },
+//   {
+//     id: 3,
+//     title: "Top-Selling Hair Essential!",
+//     price: 120.99,
+//     rating: 5,
+//     reviews: 20,
+//     image: "c3.jpg",
+//   },
+//   {
+//     id: 4,
+//     title: "Top-Selling Hair Essential!",
+//     price: 120.99,
+//     rating: 5,
+//     reviews: 20,
+//     image: "c4.jpg",
+//   },
+//   {
+//     id: 5,
+//     title: "Top-Selling Hair Essential!",
+//     price: 120.99,
+//     rating: 5,
+//     reviews: 20,
+//     image: "c5.jpg",
+//   },
+//   {
+//     id: 6,
+//     title: "Top-Selling Hair Essential!",
+//     price: 120.99,
+//     rating: 5,
+//     reviews: 20,
+//     image: "c6.jpg",
+//   },
+// ];
 
 const ProductSlider = () => {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const scrollRef = useRef(null);
   const navigate = useNavigate(); // React Router navigation
+  const userData = userToken();
+  const userId = userData?.userId;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const categoryResponse = await axios.get(`${API_URL}/category/getall`);
+        setCategories(categoryResponse.data);
+
+        const comboCategory = categoryResponse.data.find(
+          (category) => category.name === "Best Combos"
+        );
+
+        if (!comboCategory) {
+          console.error("Combo category not found!");
+          return;
+        }
+        const comboCategoryId = comboCategory.categoryId; // Ya categoryId
+
+        const productResponse = await axios.get(`${API_URL}/product/getall`);
+
+        const comboProducts = productResponse.data.filter(
+          (product) => product.categoryId === comboCategoryId
+        );
+
+        setProducts(comboProducts);
+      } catch (error) {
+        console.error("Error Fetching Data:", error);
+        setProducts([]);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleAddToCart = async (product) => {
+    if (!userId) {
+      toast.error("Please log in to add items to cart.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await axios.post(
+        `${API_URL}/cart/add`,
+        {
+          productId: product.productId,
+          userId,
+          quantity: 1,
+        },
+        { headers: { Authorization: `Bearer ${userData?.token}` } }
+      );
+      toast.success(`Product has been added to your cart.`);
+    } catch (error) {
+      toast.error(`Error To Add Product In Cart.`);
+      console.log(error);
+    }
+  };
 
   const scroll = (direction) => {
-    if (scrollRef.current) {
+    if (
+      scrollRef.current &&
+      scrollRef.current.children &&
+      scrollRef.current.children[0]
+    ) {
       const productWidth = scrollRef.current.children[0].offsetWidth;
       const gap = 16;
       const visibleCards = 3;
@@ -98,28 +164,32 @@ const ProductSlider = () => {
         >
           {products.map((product) => (
             <div
-              key={product.id}
+              key={product.productId}
+              onClick={() => {
+                navigate(`/product/${product.productId}`);
+              }}
               className="w-[calc(100vw-32px)] md:w-[335px] bg-white border border-gray-300 p-4 snap-start flex-shrink-0"
             >
               <div className="aspect-square overflow-hidden mb-4">
                 <img
-                  src={product.image}
-                  alt={product.title}
+                  src={`${API_URL}/${product.images[0]}`}
+                  alt={product.name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
+              <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
               <div className="flex items-center gap-2 mb-2">
-                <StarRating rating={product.rating} />
+                <StarRating rating={product.averageRating} />
                 <span className="text-sm text-gray-600">
-                  ({product.reviews})
+                  ({product.totalRatings})
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xl font-bold">₹{product.price}</span>
                 <button
-                  className="bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-800 transition-colors"
+                  className="bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-800 transition-colors cursor-pointer"
                   onClick={() => {
+                    handleAddToCart(product);
                     window.scrollTo(0, 0); // Scroll to top
                     navigate("/cart");
                   }}

@@ -11,28 +11,73 @@ import ContactusPage from "./Pages/ContactusPage";
 import CartPage from "./Pages/CartPage";
 import CheckoutPage from "./Pages/CheckoutPage";
 import LoginPage from "./Components/Login";
+import OrderSuccess from "./Pages/OrderSuccessPage";
+import MyOrders from "./Pages/MyOrders";
 
 import SignupPage from "./Components/Sign";
 import ProductPage from "./Pages/ProductPage";
+import AdminLayoutComponent from "./Components/AdminLayoutComponent";
+import Dashboard from "./AdminPages/Dashboard";
+import ManageContact from "./AdminPages/ManageContact";
+import Orders from "./AdminPages/Orders";
+import Products from "./AdminPages/Product";
+import Users from "./AdminPages/Users";
+import Category from "./AdminPages/Category";
+import ReviewList from "./AdminPages/Review";
+import AdminRoutes from "./utils/AdminRoutes";
+import { Toaster } from "react-hot-toast";
 
 function App() {
   return (
     <Router>
-      <Navbar />
+      <Toaster position="top-right" reverseOrder={false} />
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/shop" element={<ShopPage />} />
-        <Route path="/allproducts" element={<AllproductPage />} />
-        <Route path="/bestseller" element={<BestsellerPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contactus" element={<ContactusPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/Sign" element={<SignupPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkoutpage" element={<CheckoutPage />} />
-        <Route path="/product/:id" element={<ProductPage />} />
+        <Route
+          path="/*"
+          element={
+            <>
+              <Navbar />
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/shop" element={<ShopPage />} />
+                <Route path="/allproducts" element={<AllproductPage />} />
+                <Route path="/bestseller" element={<BestsellerPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/contactus" element={<ContactusPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/Sign" element={<SignupPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkoutpage" element={<CheckoutPage />} />
+                <Route path="/myorders" element={<MyOrders />} />
+                
+
+
+                <Route path="/order-success" element={<OrderSuccess />} />
+
+                <Route path="/product/:productId" element={<ProductPage />} />
+              </Routes>
+              <Footer />
+            </>
+          }
+        />
+        {/* ✅ Admin Panel Routes (Protected with AdminRoute) */}
+        <Route
+          path="/admin/*"
+          element={
+            <AdminRoutes>
+            <AdminLayoutComponent />
+            </AdminRoutes>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="products" element={<Products />} />
+          <Route path="orders" element={<Orders />} />
+          <Route path="users" element={<Users />} />
+          <Route path="manage-contact" element={<ManageContact />} />
+          <Route path="category" element={<Category />} />
+          <Route path="reviews" element={<ReviewList />} />
+        </Route>
       </Routes>
-      <Footer />
     </Router>
   );
 }

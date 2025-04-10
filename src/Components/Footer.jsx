@@ -36,9 +36,9 @@ const Footer = () => {
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-center md:justify-start">
               <img
-                src="logo.svg"
+                src="/logo.svg"
                 alt="Raha Logo"
-                className="h-[125px] w-auto"
+                className="h-[125px] w-auto scale-170"
               />
             </div>
 

@@ -1,80 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { Star } from "lucide-react";
+import axios from "axios";
+import { API_URL, userToken } from "./Variable";
+import { toast } from "react-hot-toast";
 import PropTypes from "prop-types";
 
-// Sample item data
-const items = [
-  {
-    id: 1,
-    title: "Top-Selling Hair Essential!",
-    image: "c4.jpg",
-    rating: 4,
-    reviews: 20,
-    price: 120.99,
-  },
-  {
-    id: 2,
-    title: "Top-Selling Hair Essential!",
-    image: "t3.jpg",
-    rating: 4,
-    reviews: 20,
-    price: 120.99,
-  },
-  {
-    id: 3,
-    title: "Top-Selling Hair Essential!",
-    image: "c2.jpg",
-    rating: 4,
-    reviews: 20,
-    price: 120.99,
-  },
-  {
-    id: 4,
-    title: "Top-Selling Hair Essential!",
-    image: "t5.jpg",
-    rating: 4,
-    reviews: 20,
-    price: 120.99,
-  },
-  {
-    id: 5,
-    title: "Top-Selling Hair Essential!",
-    image: "c6.jpg",
-    rating: 4,
-    reviews: 20,
-    price: 120.99,
-  },
-  {
-    id: 6,
-    title: "Top-Selling Hair Essential!",
-    image: "t1.jpg",
-    rating: 4,
-    reviews: 20,
-    price: 120.99,
-  },
-];
+
 
 export default function ItemListing() {
   const [cart, setCart] = useState([]);
+  const [products, setProducts] = useState([]);
+  const userData = userToken();
+  const userId = userData?.userId;
+  const navigate = useNavigate();
 
-  const addToCart = (item) => {
-    setCart([...cart, item]);
-    console.log(`Added ${item.title} to cart!`);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/product/best-sellers`);
+        console.log("data", response.data);
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error Fetching Products:", error);
+        setProducts([]);
+      }
+    };
+    fetchProduct();
+  }, []);
+
+  const handleAddToCart = async (product) => {
+    if (!userId) {
+      toast.error("Please log in to add items to cart.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await axios.post(`${API_URL}/cart/add`, {
+        productId: product.productId,
+        userId,
+        quantity: 1,
+      }, { headers: { Authorization: `Bearer ${userData?.token}` },});
+      toast.success(`Product has been added to your cart.`);
+    } catch (error) {
+      toast.error("Error To Add To Cart");
+      console.log(error);
+    }
   };
 
   return (
-    <div className="container px-8 py-8">
+    <div className="px-8 py-8">
       <h1 className="text-3xl font-serif mb-6">All Items</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {products?.map((product) => (
           <ItemCard
-            key={item.id}
-            item={item}
-            onAddToCart={() => addToCart(item)}
+            key={product.productId}
+            product={product}
+            onAddToCart={() => handleAddToCart(product)}
           />
         ))}
       </div>
@@ -82,40 +67,41 @@ export default function ItemListing() {
   );
 }
 
-function ItemCard({ item, onAddToCart }) {
+function ItemCard({ product, onAddToCart }) {
   const navigate = useNavigate(); // Initialize navigation
 
   return (
+    <>
     <div
       className="border border-gray-200 p-4 rounded-sm cursor-pointer"
-      onClick={() => navigate(`/product/${item.id}`)} // Navigate when card is clicked
+      onClick={() => navigate(`/product/${product?.productId}`)} // Navigate when card is clicked
     >
       <div className="mb-3">
         <img
-          src={item.image}
-          alt={item.title}
+          src={`${API_URL}/${product?.images[0].imageUrl}`}
+          alt={product?.name}
           className="w-full h-auto object-contain"
         />
       </div>
 
-      <h2 className="text-base font-medium mb-2">{item.title}</h2>
+      <h2 className="text-base font-medium mb-2">{product?.name}</h2>
 
       <div className="flex items-center mb-2">
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
             className={`w-4 h-4 ${
-              i < item.rating
+              i < product?.averageRating
                 ? "fill-purple-600 text-purple-600"
                 : "fill-gray-200 text-gray-200"
             }`}
           />
         ))}
-        <span className="text-xs text-gray-500 ml-2">({item.reviews})</span>
+        <span className="text-xs text-gray-500 ml-2">({product?.totalRatings})</span>
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="font-medium">₹{item.price.toFixed(2)}</span>
+        <span className="font-medium">₹{product?.price.toFixed(2)}</span>
         <button
           onClick={(e) => {
             e.stopPropagation(); // Prevent navigation when clicking "Add Cart"
@@ -123,12 +109,13 @@ function ItemCard({ item, onAddToCart }) {
             window.scrollTo(0, 0); // Scroll to top
             navigate("/cart"); // Navigate to cart page
           }}
-          className="bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-800 transition-colors"
+          className="bg-black text-white px-4 py-2 rounded-full text-sm hover:bg-gray-800 transition-colors cursor-pointer"
         >
           Add Cart
         </button>
       </div>
     </div>
+    </>
   );
 }
 

@@ -8,7 +8,7 @@ const ShopPage = () => {
     <>
       <About />
       <Review />
-      <Contact />
+      {/* <Contact /> */}
     </>
   );
 };

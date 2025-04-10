@@ -1,64 +1,66 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import ProductCard from "./ProductCard"; // Importing ProductCard component
+import axios from "axios";
+import { API_URL, userToken } from "./Variable";
+// import { toast, ToastContainer } from "react-toastify";
+import { toast } from 'react-hot-toast';
 
-const products = [
-  {
-    id: 1,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 4,
-    reviews: 20,
-    image: "home1.jpg",
-  },
-  {
-    id: 2,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 4,
-    reviews: 20,
-    image: "home2.jpg",
-  },
-  {
-    id: 3,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 4,
-    reviews: 20,
-    image: "home3.jpg",
-  },
-  {
-    id: 4,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 4,
-    reviews: 20,
-    image: "home4.jpg",
-  },
-  {
-    id: 5,
-    title: "Top-Selling Hair Essential!",
-    price: 120.99,
-    rating: 4,
-    reviews: 20,
-    image: "home1.jpg",
-  },
-];
 
 const TopSeller = () => {
   const [showAll, setShowAll] = useState(false);
   const [cart, setCart] = useState([]);
-  const navigate = useNavigate(); // Initialize navigate
+  const [products,setProducts]=useState([])
+  const navigate = useNavigate(); 
+  const userData=userToken()
+  const userId=userData?.userId;
 
-  const addToCart = (product) => {
-    setCart([...cart, product]);
-    console.log("Added to cart:", product);
-    window.scrollTo(0, 0); // Scroll to top
-    navigate("/cart"); // Navigate to CartPage on add to cart
-  };
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/product/getall`);
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error Fetching Products:", error);
+        setProducts([]);
+      }
+    };
+    fetchProduct();
+  }, []);
+  
+  // const handleAddToCart=async(product)=>{
+  //   try {
+  //     await axios.post(`${API_URL}/cart/add`,
+  //       {productId:product.productId,userId,quantity:1}
+  //     )
+  //     toast.success(`Product has been added to your cart.`);
+  //   } catch (error) {
+  //     toast.error(`Error To Add Product In Cart`);
+  //     console.log(error);
+  //   }
+  // } 
 
+  const handleAddToCart=async(product)=>{
+    if (!userId) {
+      toast.error("Please log in to add items to cart.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await axios.post(`${API_URL}/cart/add`,
+        {productId:product.productId,userId,quantity:1},
+        { headers: { Authorization: `Bearer ${userData?.token}` },}
+      )
+      toast.success(`Product has been added to your cart.`);
+    } catch (error) {
+      console.log(error);
+      toast.error(`Error To Add Product In Cart`);
+    }
+  } 
   return (
+    <>
+    {/* <ToastContainer/> */}
     <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
       {/* Title & Description */}
       <div className="max-w-7xl mx-auto mb-8 sm:mb-12 flex flex-col md:flex-row items-start justify-start gap-4 sm:gap-8">
@@ -76,9 +78,9 @@ const TopSeller = () => {
       <div className="md:hidden">
         <div className="overflow-x-auto pb-6 -mx-4 px-4">
           <div className="flex space-x-4 w-max">
-            {products.map((product) => (
-              <div key={product.id} className="w-64">
-                <ProductCard product={product} addToCart={addToCart} />
+            {products?.map((product) => (
+              <div key={product.productId} className="w-64">
+                <ProductCard product={product} addToCart={handleAddToCart} />
               </div>
             ))}
           </div>
@@ -89,21 +91,21 @@ const TopSeller = () => {
       <div className="hidden md:block">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {showAll ? (
-            products.map((product) => (
+            products?.map((product) => (
               <ProductCard
-                key={product.id}
+                key={product.productId}
                 product={product}
-                addToCart={addToCart}
+                addToCart={handleAddToCart}
               />
             ))
           ) : (
             <>
               <div className="flex items-center justify-center">
-                <ProductCard product={products[0]} addToCart={addToCart} />
+                <ProductCard product={products[0]} addToCart={handleAddToCart} />
               </div>
               <div className="flex flex-col gap-6">
-                <ProductCard product={products[1]} addToCart={addToCart} />
-                <ProductCard product={products[2]} addToCart={addToCart} />
+                <ProductCard product={products[1]} addToCart={handleAddToCart} />
+                <ProductCard product={products[2]} addToCart={handleAddToCart} />
               </div>
               <div
                 onClick={() => setShowAll(true)}
@@ -119,6 +121,7 @@ const TopSeller = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

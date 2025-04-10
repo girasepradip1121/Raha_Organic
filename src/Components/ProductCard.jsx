@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import StarRating from "./StarRating";
+import { API_URL } from "./Variable";
 
 const ProductCard = ({ product, addToCart }) => {
   const navigate = useNavigate();
@@ -14,24 +15,24 @@ const ProductCard = ({ product, addToCart }) => {
     <div
       onClick={() => {
         window.scrollTo(0, 0);
-        navigate(`/product/${product.id || ""}`);
+        navigate(`/product/${product.productId || ""}`);
       }}
       className="bg-white p-4 sm:p-6 border border-[#DCDCDC] transition"
     >
       <div className="aspect-w-11/9 overflow-hidden mb-4">
         <img
-          src={product.image ? product.image : "/placeholder.svg"} // ✅ Ensure image is always defined
-          alt={product.title ? product.title : "Product Image"}
+          src={`${API_URL}/${product.images[0]}` ? `${API_URL}/${product.images[0]}` : "/placeholder.svg"} // ✅ Ensure image is always defined
+          alt={product.name ? product.name : "Product Image"}
           className="w-full h-full object-cover rounded-md"
         />
       </div>
       <h3 className="text-base sm:text-lg font-semibold mb-2">
-        {product.title ? product.title : "Untitled Product"}
+        {product.name ? product.name : "Untitled Product"}
       </h3>
       <div className="flex items-center gap-2 mb-2">
-        <StarRating rating={product.rating || 0} />
+        <StarRating rating={product.averageRating || 0} />
         <span className="text-sm text-gray-600">
-          ({product.reviews ? product.reviews : 0})
+          ({product.totalRatings ? product.totalRatings : 0})
         </span>
       </div>
       <div className="flex items-center justify-between">
@@ -43,7 +44,7 @@ const ProductCard = ({ product, addToCart }) => {
             e.stopPropagation();
             addToCart?.(product);
           }}
-          className="bg-black text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm hover:bg-gray-800 transition-colors"
+          className="bg-black text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm hover:bg-gray-800 transition-colors cursor-pointer"
         >
           Add Cart
         </button>

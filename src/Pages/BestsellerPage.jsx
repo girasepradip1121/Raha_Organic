@@ -6,7 +6,7 @@ const ShopPage = () => {
   return (
     <>
       <BestSeller />
-      <Contact />
+      {/* <Contact /> */}
     </>
   );
 };

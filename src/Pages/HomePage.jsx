@@ -16,7 +16,7 @@ const HomePage = () => {
       <TopSelling2 />
       <Combos />
       <Review />
-      <Contact />
+      {/* <Contact /> */}
     </>
   );
 };

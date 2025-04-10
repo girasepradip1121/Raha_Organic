@@ -1,79 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { API_URL, userToken } from "./Variable";
+import { toast } from "react-hot-toast";
 
-const categories = [
-  "All Product",
-  "Hair Shampoo",
-  "Hair Oil",
-  "Hair Pack",
-  "Best Combs",
-];
+// const categories = [
+//   "All Product",
+//   "Hair Shampoo",
+//   "Hair Oil",
+//   "Hair Pack",
+//   "Best Combs",
+// ];
 
-const products = [
-  {
-    id: 1,
-    name: "Top-Selling Hair Essential!",
-    rating: 5,
-    reviews: 20,
-    price: 120.99,
-    image: "t1.jpg",
-    category: "Hair Shampoo",
-  },
-  {
-    id: 2,
-    name: "Top-Selling Hair Essential!",
-    rating: 4,
-    reviews: 20,
-    price: 120.99,
-    image: "t2.jpg",
-    category: "Hair Shampoo",
-  },
-  {
-    id: 3,
-    name: "Nourishing Hair Oil",
-    rating: 5,
-    reviews: 15,
-    price: 99.99,
-    image: "t5.jpg",
-    category: "Hair Oil",
-  },
-  {
-    id: 4,
-    name: "Revitalizing Hair Pack",
-    rating: 4,
-    reviews: 12,
-    price: 149.99,
-    image: "c1.jpg",
-    category: "Hair Pack",
-  },
-  {
-    id: 5,
-    name: "Premium Wooden Combo",
-    rating: 5,
-    reviews: 8,
-    price: 79.99,
-    image: "c2.jpg",
-    category: "Best Combs",
-  },
-  {
-    id: 6,
-    name: "Coconut Hair Oil",
-    rating: 4,
-    reviews: 18,
-    price: 89.99,
-    image: "t6.jpg",
-    category: "Hair Oil",
-  },
-];
-
-// Product Card Component
-function ProductCard({ product }) {
+function ProductCard({ product, onAddToCart }) {
   const navigate = useNavigate();
 
   const handleProductClick = () => {
-    navigate(`/product/${product.id}`);
+    navigate(`/product/${product.productId}`);
   };
 
   return (
@@ -81,8 +26,10 @@ function ProductCard({ product }) {
       className="w-full bg-white border border-gray-200 p-5 rounded-sm cursor-pointer"
       onClick={handleProductClick}
     >
+      {/* {console.log("image", `${API_URL}/${product.images[0]}`)} */}
       <img
-        src={product.image}
+        // src={product.image}
+        src={`${API_URL}/${product.images[0]}`}
         alt={product.name}
         className="w-full h-56 object-cover rounded-md"
       />
@@ -90,17 +37,19 @@ function ProductCard({ product }) {
 
       {/* Star Ratings */}
       <div className="flex items-center mt-2 text-[#8558B3]">
-        {Array.from({ length: product.rating }, (_, index) => (
+        {Array.from({ length: product.averageRating }, (_, index) => (
           <span key={index} className="text-lg">
             ★
           </span>
         ))}
-        {Array.from({ length: 5 - product.rating }, (_, index) => (
+        {Array.from({ length: 5 - product.averageRating }, (_, index) => (
           <span key={index} className="text-lg text-gray-300">
             ★
           </span>
         ))}
-        <span className="text-gray-600 ml-2 text-sm">({product.reviews})</span>
+        <span className="text-gray-600 ml-2 text-sm">
+          ({product.totalRatings})
+        </span>
       </div>
 
       {/* Price and Add to Cart */}
@@ -109,9 +58,10 @@ function ProductCard({ product }) {
           ₹{product.price.toFixed(2)}
         </p>
         <button
-          className="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all"
+          className="bg-black text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
+            onAddToCart();
             window.scrollTo(0, 0); // Scroll to top
             navigate("/cart");
           }}
@@ -124,59 +74,137 @@ function ProductCard({ product }) {
 }
 
 export default function ShopProduct() {
-  const [selectedCategory, setSelectedCategory] = useState("All Product");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const searchQuery = queryParams.get("search") || "";
+  const navigate = useNavigate();
+  const userData = userToken();
+  const userId = userData?.userId;
 
-  const filteredProducts =
-    selectedCategory === "All Product"
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/product/getall`);
+        console.log("data", response.data);
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error Fetching Products:", error);
+        setProducts([]);
+      }
+    };
+    fetchProduct();
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/category/getall`);
+      console.log("Categories Data:", response.data);
+
+      // Manually add "All Product" at the start
+      setCategories([
+        { categoryId: "all", name: "All Product" },
+        ...response.data,
+      ]);
+    } catch (error) {
+      console.error("Error Fetching Categories:", error);
+      setCategories([{ categoryId: "all", name: "All Product" }]); // Still include "All Product"
+    }
+  };
+
+  const handleAddToCart = async (product) => {
+    if (!userId) {
+      toast.error("Please log in to add items to cart.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await axios.post(`${API_URL}/cart/add`, {
+        productId: product.productId,
+        userId,
+        quantity: 1,
+      }, { headers: { Authorization: `Bearer ${userData?.token}` },});
+      toast.success(`Product has been added to your cart.`);
+    } catch (error) {}
+  };
+
+  // const filteredProducts =
+  //   selectedCategory === "all"
+  //     ? products
+  //     : products.filter((product) => product.categoryId === selectedCategory);
+
+  const categoryFilteredProducts =
+    selectedCategory === "all"
       ? products
-      : products.filter((product) => product.category === selectedCategory);
+      : products.filter((product) => product.categoryId === selectedCategory);
+
+      const filteredProducts = categoryFilteredProducts.filter((product) =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      
+
+  useEffect(() => {
+    if (searchQuery) {
+      setSelectedCategory("all");
+    }
+  }, [searchQuery]);
 
   return (
-    <div className="container px-8 sm:px-6 md:px-8 lg:px-16 py-8">
-      <h1 className="text-3xl font-light mb-8 text-center md:text-left">
-        Shop Product
-      </h1>
+    <>
+      <div className="px-8 sm:px-6 md:px-8 lg:px-16 py-8">
+        <h1 className="text-3xl font-light mb-8 text-center md:text-left">
+          Shop Product
+        </h1>
 
-      <div className="flex flex-col md:flex-row gap-12">
-        {/* Sidebar for Categories */}
-        <div className="w-full md:w-64 shrink-0">
-          <div className="bg-gray-100 overflow-hidden">
-            <div className="p-4 border-b border-gray-200 font-medium text-lg">
-              Category
+        <div className="flex flex-col md:flex-row gap-12">
+          {/* Sidebar for Categories */}
+          <div className="w-full md:w-64 shrink-0">
+            <div className="bg-gray-100 overflow-hidden">
+              <div className="p-4 border-b border-gray-200 font-medium text-lg">
+                Category
+              </div>
+              <ul>
+                {categories?.map((category) => (
+                  <li
+                    key={category.categoryId}
+                    className={`cursor-pointer p-4 transition-colors text-center md:text-left ${
+                      selectedCategory === category.categoryId
+                        ? "bg-purple-600 text-white font-semibold"
+                        : "bg-gray-50 text-gray-800 hover:bg-gray-200"
+                    }`}
+                    onClick={() => setSelectedCategory(category.categoryId)}
+                  >
+                    {category.name}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ul>
-              {categories.map((category) => (
-                <li
-                  key={category}
-                  className={`cursor-pointer p-4 transition-colors text-center md:text-left ${
-                    selectedCategory === category
-                      ? "bg-purple-600 text-white font-semibold"
-                      : "bg-gray-50 text-gray-800 hover:bg-gray-200"
-                  }`}
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </li>
+          </div>
+
+          {/* Product Display Section */}
+          <div className="flex-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.productId}
+                  product={product}
+                  onAddToCart={() => handleAddToCart(product)}
+                />
               ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Product Display Section */}
-        <div className="flex-1">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          {filteredProducts.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
-              No products found in this category.
             </div>
-          )}
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No products found in this category.
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
